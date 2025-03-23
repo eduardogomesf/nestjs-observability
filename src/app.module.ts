@@ -2,10 +2,21 @@ import { Module } from '@nestjs/common';
 import { UserModule } from './module/user.module';
 import { HelperModule } from './module/helper.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { getConfigurations } from './config/configuration';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.DB_URL ?? "mongodb://root:root@localhost:27017"),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [getConfigurations]
+    }),
+    MongooseModule.forRootAsync({
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get('db')?.url,
+      }),
+      inject: [ConfigService], 
+    }),
     HelperModule,
     UserModule,
   ],
